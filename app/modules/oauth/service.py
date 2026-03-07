@@ -255,6 +255,9 @@ class OauthService:
         except AccountIdentityConflictError as exc:
             await self._set_error(str(exc))
             return "error"
+        except Exception as exc:
+            await self._set_error(f"Unexpected error: {exc}")
+            return "error"
 
     async def _start_device_flow(self) -> OauthStartResponse:
         await self._store.reset()

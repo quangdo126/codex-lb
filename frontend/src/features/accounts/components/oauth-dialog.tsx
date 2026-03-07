@@ -59,20 +59,27 @@ function CopyButton({ text }: { text: string }) {
 function ManualCallbackInput() {
   const [callbackUrl, setCallbackUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = useCallback(async () => {
     if (!callbackUrl.trim()) return;
     setSubmitting(true);
+    setError(null);
     try {
-      await fetch("/api/oauth/manual-callback", {
+      const res = await fetch("/api/oauth/manual-callback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ callback_url: callbackUrl.trim() }),
         credentials: "include",
       });
+      const data = await res.json();
+      if (!res.ok || data.status === "error") {
+        setError(data.message || data.error_message || "Callback processing failed.");
+        return;
+      }
       setCallbackUrl("");
     } catch {
-      // status polling will surface the error
+      setError("Network error. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -101,6 +108,9 @@ function ManualCallbackInput() {
           {submitting ? "Submitting..." : "Submit"}
         </Button>
       </div>
+      {error ? (
+        <p className="text-xs text-destructive">{error}</p>
+      ) : null}
     </div>
   );
 }
